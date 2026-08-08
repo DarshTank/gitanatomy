@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 
 export function getRepoGithubUrl(repoPath) {
   try {
@@ -37,6 +37,26 @@ function getCommitSummaries(repoPath) {
   return summaries;
 }
 
+function getObjectTypes(shas, repoPath) {
+  const types = {};
+  if (shas.length === 0) return types;
+
+  const result = spawnSync('git', ['cat-file', '--batch-check=%(objectname) %(objecttype)'], {
+    cwd: repoPath,
+    encoding: 'utf-8',
+    input: shas.join('\n') + '\n',
+    maxBuffer: 1024 * 1024 * 64
+  });
+
+  if (result.error) throw result.error;
+
+  result.stdout.trim().split('\n').filter(Boolean).forEach(line => {
+    const [sha, type] = line.split(' ');
+    types[sha] = type;
+  });
+  return types;
+}
+
 export async function analyzeRepository(repoPath) {
   try {
     // Verify it's a Git repo
@@ -48,20 +68,26 @@ export async function analyzeRepository(repoPath) {
     // Get all Git objects
     const output = execSync('git rev-list --objects --all', {
       cwd: repoPath,
-      encoding: 'utf-8'
+      encoding: 'utf-8',
+      maxBuffer: 1024 * 1024 * 64
+    });
+
+    const entries = output.trim().split('\n').filter(Boolean).map(line => {
+      const [sha, path] = line.split(' ');
+      return { sha, path: path || null };
     });
 
     const commitSummaries = getCommitSummaries(repoPath);
+    const objectTypes = getObjectTypes(entries.map(e => e.sha), repoPath);
 
-    return output.trim().split('\n').map(line => {
-      const [sha, path] = line.split(' ');
-      const type = getObjectType(sha, repoPath);
+    return entries.map(({ sha, path }) => {
+      const type = objectTypes[sha] || 'unknown';
       const summary = type === 'commit' ? commitSummaries[sha] : null;
       return {
         sha,
-        path: path || null,
+        path,
         type,
-        title: summary ? summary.subject : (path || null),
+        title: summary ? summary.subject : path,
         author: summary ? summary.author : null,
         date: summary ? summary.date : null
       };
@@ -154,11 +180,4 @@ export async function getObjectDetails(repoPath, sha, type) {
   }
   
   return details;
-}
-
-function getObjectType(sha, repoPath) {
-  return execSync(`git cat-file -t ${sha}`, { 
-    cwd: repoPath,
-    encoding: 'utf-8'
-  }).trim();
 }
