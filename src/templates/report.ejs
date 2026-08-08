@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Git Objects Analyzer - <%= repoPath %></title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/fontawesome/css/all.min.css">
+</head>
+<%
+  const commits = objects.filter(o => o.type === 'commit');
+  const trees = objects.filter(o => o.type === 'tree');
+  const blobs = objects.filter(o => o.type === 'blob');
+  const total = objects.length || 1;
+  const recentCommits = commits.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+%>
+<body class="light-theme">
+  <header>
+    <div class="header-content">
+      <div class="header-title">
+        <span class="header-logo"><i class="fas fa-code-branch"></i></span>
+        Git Objects Analyzer
+        <a href="<%= analyzerToolGithubUrl %>" target="_blank" rel="noopener" class="github-link" title="View this tool on GitHub">
+          <i class="fab fa-github"></i>
+        </a>
+      </div>
+
+      <div class="repo-pill" title="<%= repoPath %>">
+        <i class="fas fa-folder"></i>
+        <span><%= repoPath %></span>
+      </div>
+
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search sha, path or author">
+      </div>
+
+      <div class="controls">
+        <% if (analyzedRepoGithubUrl) { %>
+          <a href="<%= analyzedRepoGithubUrl %>" target="_blank" rel="noopener" class="btn repo-github-link" title="Open this repository on GitHub">
+            <i class="fab fa-github"></i> Repo
+          </a>
+        <% } %>
+        <button id="theme-toggle" class="btn">
+          <i class="fas fa-moon"></i> Dark
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <aside class="sidebar-list">
+      <div class="filter-pills" id="typeFilter">
+        <button class="pill active" data-type="">All <span class="pill-count"><%= objects.length %></span></button>
+        <button class="pill" data-type="commit">Commits <span class="pill-count"><%= commits.length %></span></button>
+        <button class="pill" data-type="tree">Trees <span class="pill-count"><%= trees.length %></span></button>
+        <button class="pill" data-type="blob">Blobs <span class="pill-count"><%= blobs.length %></span></button>
+      </div>
+
+      <div class="object-list" id="objectList">
+        <% objects.forEach(obj => { %>
+          <div class="object-row" data-type="<%= obj.type %>" data-sha="<%= obj.sha %>" data-search="<%= [obj.sha, obj.path, obj.author, obj.title].filter(Boolean).join(' ').toLowerCase() %>">
+            <span class="object-row-icon type-<%= obj.type %>"><i class="<%= getObjectIcon(obj.type) %>"></i></span>
+            <div class="object-row-text">
+              <div class="object-row-title"><%= obj.title || obj.sha %></div>
+              <div class="object-row-sha"><%= obj.sha.substring(0, 10) %></div>
+            </div>
+            <button class="copy-btn" data-copy="<%= obj.sha %>" title="Copy SHA"><i class="fas fa-copy"></i></button>
+          </div>
+        <% }); %>
+      </div>
+
+      <div class="empty-list" id="emptyList" hidden>
+        <p>No objects match your search.</p>
+      </div>
+    </aside>
+
+    <section class="panel" id="panel">
+      <div class="overview" id="overview">
+        <div class="eyebrow">Overview</div>
+        <h1>Every object in the repository</h1>
+        <p class="lede">
+          Walked with <code>git rev-list --objects --all</code>. Pick anything on the left to inspect its contents.
+        </p>
+
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="stat-card-value"><%= objects.length %></div>
+            <div class="stat-card-label">Total objects</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-value"><%= commits.length %></div>
+            <div class="stat-card-label">Commits</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-value"><%= trees.length %></div>
+            <div class="stat-card-label">Trees</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-value"><%= blobs.length %></div>
+            <div class="stat-card-label">Blobs</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Object distribution</h2>
+          <div class="distribution-bar">
+            <span class="segment commit-seg" style="width: <%= (commits.length / total * 100).toFixed(2) %>%"></span>
+            <span class="segment tree-seg" style="width: <%= (trees.length / total * 100).toFixed(2) %>%"></span>
+            <span class="segment blob-seg" style="width: <%= (blobs.length / total * 100).toFixed(2) %>%"></span>
+          </div>
+          <div class="distribution-legend">
+            <span class="legend-item"><i class="legend-dot commit-seg"></i> Commits <span class="legend-pct"><%= commits.length %> · <%= (commits.length / total * 100).toFixed(0) %>%</span></span>
+            <span class="legend-item"><i class="legend-dot tree-seg"></i> Trees <span class="legend-pct"><%= trees.length %> · <%= (trees.length / total * 100).toFixed(0) %>%</span></span>
+            <span class="legend-item"><i class="legend-dot blob-seg"></i> Blobs <span class="legend-pct"><%= blobs.length %> · <%= (blobs.length / total * 100).toFixed(0) %>%</span></span>
+          </div>
+        </div>
+
+        <% if (recentCommits.length > 0) { %>
+          <div class="card">
+            <h2>Recent commits</h2>
+            <div class="recent-commits">
+              <% recentCommits.forEach(c => { %>
+                <div class="recent-commit-row" data-sha="<%= c.sha %>" data-type="commit">
+                  <span class="recent-commit-dot"></span>
+                  <div class="recent-commit-text">
+                    <div class="recent-commit-title"><%= c.title %></div>
+                    <div class="recent-commit-meta"><%= c.author %> · <%= c.date ? c.date.split(' ')[0] : '' %> · <%= c.sha.substring(0, 7) %></div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+
+      <div class="object-detail-view" id="objectDetail"></div>
+    </section>
+  </main>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
