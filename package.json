@@ -39,10 +39,11 @@
     "trees",
     "commits"
   ],
-  "author": "Krish Vaghasia",
+  "author": "Darsh Tank",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/KRISH-V-0610/git-objects-analyzer.git"
-  }
+    "url": "git+https://github.com/DarshTank/gitanatomy.git"
+  },
+  "homepage": "https://github.com/DarshTank/gitanatomy#readme"
 }
