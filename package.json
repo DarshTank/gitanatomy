@@ -4,11 +4,11 @@
   "type": "module",
   "description": "Dissect a Git repository's internal objects (commits, trees, blobs) in an interactive local dashboard",
   "bin": {
-    "gitanatomy": "./bin/analyze-git-objects.js"
+    "gitanatomy": "./bin/gitanatomy.js"
   },
   "scripts": {
-    "start": "node ./bin/analyze-git-objects.js",
-    "dev": "nodemon ./bin/analyze-git-objects.js"
+    "start": "node ./bin/gitanatomy.js",
+    "dev": "nodemon ./bin/gitanatomy.js"
   },
   "dependencies": {
     "commander": "^11.1.0",

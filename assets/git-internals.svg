@@ -1,154 +1,191 @@
-<svg viewBox="0 0 1240 900" xmlns="http://www.w3.org/2000/svg" role="img"
-     aria-label="Diagram of the .git directory: HEAD points to the current branch ref, refs/heads stores branch pointers to commits, commits point to a root tree, trees point to blobs and other trees, and index stages changes before they become a commit.">
+<svg viewBox="0 0 1200 920" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-labelledby="ga-title ga-desc">
+  <title id="ga-title">How .git stores a repository</title>
+  <desc id="ga-desc">Two zones. Zone one, refs: HEAD is a symbolic ref pointing at refs/heads/main, which holds the sha of the tip commit; both are small mutable text files. Zone two, objects: a commit points to its parent commit and to one root tree; the root tree points to a src/ subtree and to blobs for README.md and package.json; the src/ tree points to a blob for server.js. Every object is immutable and addressed by the sha of its content. The index is a staging list of path-to-blob-sha that git commit turns into trees.</desc>
+
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--line-strong)"/>
     </marker>
     <marker id="arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#c96442"/>
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+    </marker>
+    <marker id="arrow-faint" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--line-strong)" fill-opacity="0.55"/>
     </marker>
   </defs>
 
   <style>
-    .lbl { font: 600 13px -apple-system, "Segoe UI", sans-serif; }
-    .lbl-sm { font: 500 11.5px -apple-system, "Segoe UI", sans-serif; }
+    svg {
+      --bg: #fdfcfa;
+      --ink: #1f1e1c;
+      --band: #f3f0e9;
+      --line: #d8d3c8;
+      --line-strong: #8b867c;
+      --accent: #c96442;
+      --tree: #4d7c5f;
+      --tree-soft: #6f8f73;
+      --blob: #6b6a63;
+      --blob-soft: #9a988f;
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --bg: #1a1917;
+        --ink: #eceae4;
+        --band: #232120;
+        --line: #3b3833;
+        --line-strong: #8f8a80;
+        --accent: #e08a6b;
+        --tree: #86b394;
+        --tree-soft: #6f8f73;
+        --blob: #a5a29a;
+        --blob-soft: #7d7b74;
+      }
+    }
+
+    text { fill: var(--ink); }
+    .display { font: 600 24px Georgia, "Times New Roman", serif; }
+    .lbl  { font: 600 13px -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .lbl-sm { font: 500 11.5px -apple-system, "Segoe UI", Roboto, sans-serif; }
     .mono { font: 12px "SF Mono", "Roboto Mono", Consolas, monospace; }
     .mono-sm { font: 11px "SF Mono", "Roboto Mono", Consolas, monospace; }
-    .cap { font: 600 11px -apple-system, "Segoe UI", sans-serif; letter-spacing: 0.04em; text-transform: uppercase; }
-    .edge { fill: none; stroke: currentColor; stroke-width: 1.5; opacity: 0.55; }
-    .edge-accent { fill: none; stroke: #c96442; stroke-width: 1.75; }
+    .cap  { font: 600 10.5px -apple-system, "Segoe UI", Roboto, sans-serif; letter-spacing: 0.07em; }
+    .dim  { fill-opacity: 0.62; }
+    .dimmer { fill-opacity: 0.45; }
+    .edge { fill: none; stroke: var(--line-strong); stroke-width: 1.4; stroke-opacity: 0.75; }
+    .edge-accent { fill: none; stroke: var(--accent); stroke-width: 1.75; }
+    .zone { fill: var(--band); stroke: var(--line); stroke-width: 1; }
+    .card { fill: none; stroke: var(--line); stroke-width: 1.25; }
+    .node { stroke-width: 1.75; }
   </style>
 
-  <text x="620" y="40" text-anchor="middle" class="lbl" font-size="22" font-family="Georgia, serif">gitanatomy — how .git stores a repository</text>
-  <text x="620" y="63" text-anchor="middle" class="lbl-sm" opacity="0.65">Git doesn't track files by name — it tracks content, addressed by SHA hash.</text>
+  <rect x="0" y="0" width="1200" height="920" fill="var(--bg)"/>
 
-  <!-- refs/heads/main -->
-  <rect x="40" y="110" width="190" height="54" rx="10" fill="none" stroke="#c96442" stroke-width="1.75"/>
-  <text x="135" y="130" text-anchor="middle" class="cap" fill="#c96442">ref</text>
-  <text x="135" y="150" text-anchor="middle" class="mono">refs/heads/main</text>
+  <!-- ══ header ══ -->
+  <text x="600" y="48" text-anchor="middle" class="display">gitanatomy — how <tspan fill="var(--accent)">.git</tspan> stores a repository</text>
+  <text x="600" y="74" text-anchor="middle" class="lbl-sm dim">Git doesn't track files by name. It stores content, addressed by the SHA of that content.</text>
+
+  <!-- ══════════ ZONE 1 — REFS ══════════ -->
+  <rect x="40" y="96" width="1120" height="140" rx="16" class="zone"/>
+  <text x="64" y="124" class="cap" fill="var(--accent)">REFS · MUTABLE</text>
+  <text x="176" y="124" class="lbl-sm dim">small text files git rewrites in place — no hashing, no history</text>
 
   <!-- HEAD -->
-  <rect x="40" y="30" width="190" height="54" rx="10" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.85"/>
-  <text x="135" y="50" text-anchor="middle" class="cap" opacity="0.7">symbolic ref</text>
-  <text x="135" y="70" text-anchor="middle" class="mono">HEAD</text>
+  <rect x="72" y="142" width="200" height="62" rx="10" fill="none" stroke="var(--line-strong)" class="node"/>
+  <text x="172" y="167" text-anchor="middle" class="cap dim">SYMBOLIC REF</text>
+  <text x="172" y="188" text-anchor="middle" class="mono">HEAD</text>
 
-  <path class="edge" d="M135,84 L135,110" marker-end="url(#arrow)"/>
-  <text x="150" y="100" class="mono-sm" opacity="0.6">points to</text>
+  <path class="edge" d="M272,173 L358,173" marker-end="url(#arrow)"/>
+  <text x="315" y="165" text-anchor="middle" class="mono-sm dim">points to</text>
+
+  <!-- branch ref -->
+  <rect x="365" y="142" width="200" height="62" rx="10" fill="none" stroke="var(--accent)" class="node"/>
+  <text x="465" y="167" text-anchor="middle" class="cap" fill="var(--accent)">BRANCH REF</text>
+  <text x="465" y="188" text-anchor="middle" class="mono">refs/heads/main</text>
+
+  <!-- refs explainer -->
+  <text x="648" y="152" class="lbl-sm dim">Both hold exactly one line:</text>
+  <text x="648" y="176" class="mono-sm dim">HEAD             ref: refs/heads/main</text>
+  <text x="648" y="194" class="mono-sm dim">refs/heads/main  a1b2c3d…  (40 hex chars)</text>
+  <text x="648" y="218" class="mono-sm" fill="var(--accent)">git commit  →  rewrites that one file. Nothing else moves.</text>
+
+  <!-- ref → commit -->
+  <path class="edge-accent" d="M465,204 L465,314" marker-end="url(#arrow-accent)"/>
+  <text x="480" y="266" class="mono-sm dim">tip of the branch</text>
+
+  <!-- ══════════ ZONE 2 — OBJECTS ══════════ -->
+  <rect x="40" y="268" width="1120" height="430" rx="16" class="zone"/>
+  <text x="64" y="296" class="cap" fill="var(--tree)">OBJECTS · IMMUTABLE</text>
+  <text x="212" y="296" class="lbl-sm dim">written once to .git/objects/&lt;sha[0:2]&gt;/&lt;sha[2:]&gt; — the sha <tspan font-style="italic">is</tspan> the address</text>
 
   <!-- commit chain -->
-  <g>
-    <rect x="290" y="110" width="150" height="54" rx="10" fill="#c96442" fill-opacity="0.12" stroke="#c96442" stroke-width="1.75"/>
-    <text x="365" y="130" text-anchor="middle" class="cap" fill="#c96442">commit</text>
-    <text x="365" y="150" text-anchor="middle" class="mono">a1b2c3d</text>
-  </g>
-  <path class="edge-accent" d="M230,137 L290,137" marker-end="url(#arrow-accent)"/>
+  <rect x="380" y="316" width="170" height="62" rx="10" fill="var(--accent)" fill-opacity="0.12" stroke="var(--accent)" class="node"/>
+  <text x="465" y="341" text-anchor="middle" class="cap" fill="var(--accent)">COMMIT</text>
+  <text x="465" y="362" text-anchor="middle" class="mono">a1b2c3d</text>
 
-  <g>
-    <rect x="490" y="110" width="150" height="54" rx="10" fill="#c96442" fill-opacity="0.12" stroke="#c96442" stroke-width="1.75"/>
-    <text x="565" y="130" text-anchor="middle" class="cap" fill="#c96442">commit</text>
-    <text x="565" y="150" text-anchor="middle" class="mono">e4f5a6b</text>
-  </g>
-  <path class="edge-accent" d="M440,137 L490,137" marker-end="url(#arrow-accent)"/>
-  <text x="465" y="128" text-anchor="middle" class="mono-sm" opacity="0.6">parent</text>
+  <path class="edge-accent" d="M550,347 L598,347" marker-end="url(#arrow-accent)"/>
+  <text x="574" y="368" text-anchor="middle" class="mono-sm dim">parent</text>
 
-  <!-- commit metadata callout -->
-  <rect x="700" y="100" width="290" height="76" rx="10" fill="none" stroke="currentColor" stroke-width="1" opacity="0.35" stroke-dasharray="4 3"/>
-  <text x="716" y="120" class="lbl-sm" opacity="0.8">A commit object holds:</text>
-  <text x="716" y="138" class="mono-sm" opacity="0.65">author, date, message</text>
-  <text x="716" y="154" class="mono-sm" opacity="0.65">parent commit sha(s)</text>
-  <text x="716" y="170" class="mono-sm" opacity="0.65">→ one root tree sha</text>
-  <path class="edge" d="M640,137 L700,137" marker-end="url(#arrow)" opacity="0.35"/>
+  <rect x="600" y="316" width="170" height="62" rx="10" fill="var(--accent)" fill-opacity="0.12" stroke="var(--accent)" class="node"/>
+  <text x="685" y="341" text-anchor="middle" class="cap" fill="var(--accent)">COMMIT</text>
+  <text x="685" y="362" text-anchor="middle" class="mono">e4f5a6b</text>
 
-  <!-- commit -> tree -->
-  <path class="edge-accent" d="M365,164 L365,230" marker-end="url(#arrow-accent)"/>
-  <text x="380" y="200" class="mono-sm" fill="#c96442">snapshot</text>
+  <!-- commit callout -->
+  <path class="edge" d="M770,347 L826,347" marker-end="url(#arrow-faint)" stroke-opacity="0.4"/>
+  <rect x="830" y="306" width="330" height="98" rx="10" fill="none" stroke="var(--line)" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="852" y="330" class="lbl-sm dim">A commit object holds</text>
+  <text x="852" y="352" class="mono-sm dim">one root tree sha</text>
+  <text x="852" y="370" class="mono-sm dim">zero or more parent shas</text>
+  <text x="852" y="388" class="mono-sm dim">author · committer · message</text>
 
-  <!-- root tree -->
-  <g>
-    <rect x="270" y="230" width="190" height="54" rx="10" fill="#6f8f73" fill-opacity="0.14" stroke="#6f8f73" stroke-width="1.75"/>
-    <text x="365" y="250" text-anchor="middle" class="cap" fill="#4d7c5f">tree (root)</text>
-    <text x="365" y="270" text-anchor="middle" class="mono">9f1c2ab</text>
-  </g>
+  <!-- commit → root tree -->
+  <path class="edge-accent" d="M465,378 L465,418" marker-end="url(#arrow-accent)"/>
+  <text x="480" y="403" class="mono-sm" fill="var(--accent)">snapshot</text>
 
-  <!-- root tree -> subtree + blobs -->
-  <path class="edge" d="M320,284 L200,340" marker-end="url(#arrow)"/>
-  <path class="edge" d="M365,284 L365,340" marker-end="url(#arrow)"/>
-  <path class="edge" d="M410,284 L540,340" marker-end="url(#arrow)"/>
+  <rect x="370" y="420" width="190" height="62" rx="10" fill="var(--tree-soft)" fill-opacity="0.16" stroke="var(--tree-soft)" class="node"/>
+  <text x="465" y="445" text-anchor="middle" class="cap" fill="var(--tree)">TREE · ROOT</text>
+  <text x="465" y="466" text-anchor="middle" class="mono">9f1c2ab</text>
 
-  <g>
-    <rect x="100" y="340" width="200" height="54" rx="10" fill="#6f8f73" fill-opacity="0.14" stroke="#6f8f73" stroke-width="1.75"/>
-    <text x="200" y="360" text-anchor="middle" class="cap" fill="#4d7c5f">tree — src/</text>
-    <text x="200" y="380" text-anchor="middle" class="mono">7ad04ef</text>
-  </g>
+  <!-- root tree → children -->
+  <path class="edge" d="M415,482 L253,514" marker-end="url(#arrow)"/>
+  <path class="edge" d="M465,482 L465,514" marker-end="url(#arrow)"/>
+  <path class="edge" d="M515,482 L677,514" marker-end="url(#arrow)"/>
 
-  <g>
-    <rect x="270" y="340" width="190" height="54" rx="10" fill="#9a988f" fill-opacity="0.16" stroke="#9a988f" stroke-width="1.75"/>
-    <text x="365" y="360" text-anchor="middle" class="cap" fill="#6b6a63">blob — README.md</text>
-    <text x="365" y="380" text-anchor="middle" class="mono">2be4a91</text>
-  </g>
+  <rect x="150" y="520" width="190" height="62" rx="10" fill="var(--tree-soft)" fill-opacity="0.16" stroke="var(--tree-soft)" class="node"/>
+  <text x="245" y="545" text-anchor="middle" class="cap" fill="var(--tree)">TREE · src/</text>
+  <text x="245" y="566" text-anchor="middle" class="mono">7ad04ef</text>
 
-  <g>
-    <rect x="460" y="340" width="190" height="54" rx="10" fill="#9a988f" fill-opacity="0.16" stroke="#9a988f" stroke-width="1.75"/>
-    <text x="555" y="360" text-anchor="middle" class="cap" fill="#6b6a63">blob — package.json</text>
-    <text x="555" y="380" text-anchor="middle" class="mono">c31de88</text>
-  </g>
+  <rect x="370" y="520" width="190" height="62" rx="10" fill="var(--blob-soft)" fill-opacity="0.18" stroke="var(--blob-soft)" class="node"/>
+  <text x="465" y="545" text-anchor="middle" class="cap" fill="var(--blob)">BLOB · README.md</text>
+  <text x="465" y="566" text-anchor="middle" class="mono">2be4a91</text>
 
-  <path class="edge" d="M200,394 L200,420" marker-end="url(#arrow)"/>
-  <g>
-    <rect x="100" y="420" width="200" height="54" rx="10" fill="#9a988f" fill-opacity="0.16" stroke="#9a988f" stroke-width="1.75"/>
-    <text x="200" y="440" text-anchor="middle" class="cap" fill="#6b6a63">blob — server.js</text>
-    <text x="200" y="460" text-anchor="middle" class="mono">a04c9e1</text>
-  </g>
+  <rect x="590" y="520" width="190" height="62" rx="10" fill="var(--blob-soft)" fill-opacity="0.18" stroke="var(--blob-soft)" class="node"/>
+  <text x="685" y="545" text-anchor="middle" class="cap" fill="var(--blob)">BLOB · package.json</text>
+  <text x="685" y="566" text-anchor="middle" class="mono">c31de88</text>
 
-  <!-- object type legend / definitions -->
-  <g transform="translate(720, 230)">
-    <rect x="0" y="0" width="480" height="270" rx="14" fill="currentColor" fill-opacity="0.04" stroke="currentColor" stroke-width="1" opacity="0.9"/>
-    <text x="24" y="34" class="lbl" font-size="15">The three object types</text>
+  <path class="edge" d="M245,582 L245,606" marker-end="url(#arrow)"/>
+  <rect x="150" y="610" width="190" height="62" rx="10" fill="var(--blob-soft)" fill-opacity="0.18" stroke="var(--blob-soft)" class="node"/>
+  <text x="245" y="635" text-anchor="middle" class="cap" fill="var(--blob)">BLOB · server.js</text>
+  <text x="245" y="656" text-anchor="middle" class="mono">a04c9e1</text>
 
-    <circle cx="34" cy="66" r="6" fill="#c96442"/>
-    <text x="52" y="71" class="lbl-sm">Commit</text>
-    <text x="52" y="88" class="mono-sm" opacity="0.65">Points to one tree (a snapshot) plus</text>
-    <text x="52" y="103" class="mono-sm" opacity="0.65">parent commit(s), author, date, message.</text>
+  <!-- legend -->
+  <rect x="830" y="430" width="330" height="252" rx="12" fill="none" stroke="var(--line)" stroke-width="1"/>
+  <text x="854" y="462" class="lbl">The three object types</text>
 
-    <circle cx="34" cy="138" r="6" fill="#4d7c5f"/>
-    <text x="52" y="143" class="lbl-sm">Tree</text>
-    <text x="52" y="160" class="mono-sm" opacity="0.65">Represents a directory. Lists names +</text>
-    <text x="52" y="175" class="mono-sm" opacity="0.65">modes pointing to blobs and other trees.</text>
+  <circle cx="862" cy="494" r="5.5" fill="var(--accent)"/>
+  <text x="882" y="499" class="lbl-sm">Commit</text>
+  <text x="882" y="517" class="mono-sm dim">One tree, plus the parents it came</text>
+  <text x="882" y="532" class="mono-sm dim">from. This is what "history" means.</text>
 
-    <circle cx="34" cy="210" r="6" fill="#6b6a63"/>
-    <text x="52" y="215" class="lbl-sm">Blob</text>
-    <text x="52" y="232" class="mono-sm" opacity="0.65">Binary Large Object. Raw file content —</text>
-    <text x="52" y="247" class="mono-sm" opacity="0.65">no filename or metadata attached.</text>
-  </g>
+  <circle cx="862" cy="558" r="5.5" fill="var(--tree)"/>
+  <text x="882" y="563" class="lbl-sm">Tree</text>
+  <text x="882" y="581" class="mono-sm dim">A directory listing — mode, sha and</text>
+  <text x="882" y="596" class="mono-sm dim">name per blob or nested tree.</text>
 
-  <!-- storage note -->
-  <text x="620" y="530" text-anchor="middle" class="lbl-sm" opacity="0.7">
-    Every object above is content-addressed and stored under .git/objects/&lt;sha[0:2]&gt;/&lt;sha[2:]&gt;
-  </text>
+  <circle cx="862" cy="622" r="5.5" fill="var(--blob)"/>
+  <text x="882" y="627" class="lbl-sm">Blob</text>
+  <text x="882" y="645" class="mono-sm dim">Raw file bytes, nothing else. The</text>
+  <text x="882" y="660" class="mono-sm dim">name lives in the tree above it.</text>
 
-  <!-- index / staging area -->
-  <g transform="translate(90, 580)">
-    <rect x="0" y="0" width="480" height="130" rx="14" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.85"/>
-    <text x="20" y="30" class="cap" opacity="0.7">.git/index — the staging area</text>
-    <text x="20" y="56" class="mono-sm" opacity="0.7">Tracks which blob sha will go into the</text>
-    <text x="20" y="74" class="mono-sm" opacity="0.7">next commit's tree — the bridge between</text>
-    <text x="20" y="92" class="mono-sm" opacity="0.7">your working files and a new snapshot.</text>
-    <text x="20" y="114" class="mono-sm" fill="#c96442">git add  →  updates the index</text>
-  </g>
+  <!-- index → tree, routed down the left channel -->
+  <path class="edge" d="M200,726 Q55,610 90,470 Q105,435 366,451"
+        marker-end="url(#arrow)" stroke-dasharray="5 4" stroke-opacity="0.55"/>
+  <text x="175" y="412" class="mono-sm" fill="var(--accent)">git commit: index → tree</text>
 
-  <!-- refs/heads folder -->
-  <g transform="translate(670, 580)">
-    <rect x="0" y="0" width="480" height="130" rx="14" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.85"/>
-    <text x="20" y="30" class="cap" opacity="0.7">.git/refs/heads/ — branch pointers</text>
-    <text x="20" y="56" class="mono-sm" opacity="0.7">One small file per local branch, each</text>
-    <text x="20" y="74" class="mono-sm" opacity="0.7">holding the sha of its latest commit.</text>
-    <text x="20" y="92" class="mono-sm" opacity="0.7">Moving a branch just rewrites this file.</text>
-    <text x="20" y="114" class="mono-sm" fill="#c96442">git commit  →  advances the branch ref</text>
-  </g>
+  <!-- ══ bottom cards ══ -->
+  <rect x="40" y="730" width="560" height="138" rx="14" class="card"/>
+  <text x="64" y="760" class="cap dim">.GIT/INDEX · THE STAGING AREA</text>
+  <text x="64" y="786" class="mono-sm dim">A flat list of path → blob sha. git add writes</text>
+  <text x="64" y="804" class="mono-sm dim">the blob into .git/objects immediately and</text>
+  <text x="64" y="822" class="mono-sm dim">records its sha here — the commit comes later.</text>
+  <text x="64" y="848" class="mono-sm" fill="var(--accent)">git commit  →  folds that list into trees</text>
 
-  <!-- flow arrow index -> commit -->
-  <path class="edge" d="M400,580 Q420,480 380,290" marker-end="url(#arrow)" stroke-dasharray="5 4"/>
-  <text x="440" y="500" class="mono-sm" opacity="0.55">git commit builds a tree from the index</text>
+  <rect x="630" y="730" width="530" height="138" rx="14" class="card"/>
+  <text x="654" y="760" class="cap dim">THE RIPPLE · WHY ONE EDIT CHANGES EVERY SHA</text>
+  <text x="654" y="786" class="mono-sm dim">Change a byte in server.js → new blob sha →</text>
+  <text x="654" y="804" class="mono-sm dim">new src/ tree → new root tree → new commit.</text>
+  <text x="654" y="822" class="mono-sm dim">Untouched files keep their old shas and are reused.</text>
+  <text x="654" y="848" class="mono-sm" fill="var(--accent)">A repo is a Merkle tree. That's where integrity comes from.</text>
 
-  <text x="620" y="860" text-anchor="middle" class="lbl-sm" opacity="0.55">gitanatomy · npm install -g gitanatomy</text>
+  <text x="600" y="900" text-anchor="middle" class="lbl-sm dimmer">gitanatomy · npm install -g gitanatomy</text>
 </svg>

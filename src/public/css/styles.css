@@ -245,6 +245,43 @@ main {
   min-height: 0;
 }
 
+/* Footer */
+.site-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 0.65rem 1.5rem;
+  border-top: 1px solid var(--border);
+  background-color: var(--bg);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.footer-link:hover {
+  color: var(--primary);
+}
+
+.footer-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.footer-name:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
 /* Sidebar list */
 .sidebar-list {
   width: 340px;

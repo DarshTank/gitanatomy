@@ -30,7 +30,7 @@ function getObjectIcon(type) {
     try {
       const objects = await analyzeRepository(repoPath);
       const analyzedRepoGithubUrl = getRepoGithubUrl(repoPath);
-      const analyzerToolGithubUrl = 'https://github.com/KRISH-V-0610/git-objects-analyzer';
+      const analyzerToolGithubUrl = 'https://github.com/DarshTank/gitanatomy';
       res.render('report', {
         objects,
         repoPath,
