@@ -1,6 +1,6 @@
 {
   "name": "gitanatomy",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Dissect a Git repository's internal objects (commits, trees, blobs) in an interactive local dashboard",
   "bin": {
